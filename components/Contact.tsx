@@ -98,16 +98,16 @@ const Contact = () => {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Get In Touch</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Ready to bring your ideas to life? Let's discuss your next project
+              {`Ready to bring your ideas to life? Let's discuss your next project`}
             </p>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-12">
             <div>
-              <h3 className="text-2xl font-semibold mb-6">Let's Connect</h3>
+              <h3 className="text-2xl font-semibold mb-6">{`Let's Connect`}</h3>
               <p className="text-muted-foreground mb-8">
-                I'm always interested in hearing about new opportunities and exciting projects.
-                Whether you have a question or just want to say hi, feel free to reach out!
+                {`I'm always interested in hearing about new opportunities and exciting projects.
+                Whether you have a question or just want to say hi, feel free to reach out!`}
               </p>
 
               <div className="space-y-4">
@@ -159,35 +159,35 @@ const Contact = () => {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <Input 
+                    <Input
                       name="firstName"
-                      placeholder="First Name" 
+                      placeholder="First Name"
                       value={formData.firstName}
                       onChange={handleInputChange}
-                      required 
+                      required
                     />
-                    <Input 
+                    <Input
                       name="lastName"
-                      placeholder="Last Name" 
+                      placeholder="Last Name"
                       value={formData.lastName}
                       onChange={handleInputChange}
-                      required 
+                      required
                     />
                   </div>
-                  <Input 
+                  <Input
                     name="email"
-                    type="email" 
-                    placeholder="Email Address" 
+                    type="email"
+                    placeholder="Email Address"
                     value={formData.email}
                     onChange={handleInputChange}
-                    required 
+                    required
                   />
-                  <Input 
+                  <Input
                     name="subject"
-                    placeholder="Subject" 
+                    placeholder="Subject"
                     value={formData.subject}
                     onChange={handleInputChange}
-                    required 
+                    required
                   />
                   <Textarea
                     name="message"
@@ -197,8 +197,8 @@ const Contact = () => {
                     onChange={handleInputChange}
                     required
                   />
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full"
                     disabled={isSubmitting}
                   >
