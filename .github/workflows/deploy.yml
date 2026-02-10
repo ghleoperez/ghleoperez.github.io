@@ -25,7 +25,7 @@ jobs:
         run: |
           rm -rf node_modules
           rm -f package-lock.json
-          npm install
+          npm install --legacy-peer-deps
       - name: Build with Next.js
         run: npm run build
         env:
