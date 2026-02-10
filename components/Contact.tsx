@@ -21,7 +21,7 @@ const Contact = () => {
   // Contact information
   const contactInfo = {
     email: 'happyleonardo77@gmail.com',
-    phone: '+1 (215) 297-4250',
+    phone: '+57 3017216927',
     location: 'Medellin, Colombia'
   };
 
