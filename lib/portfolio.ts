@@ -27,24 +27,7 @@ const DB_PATH = 'portfolio_items';
 
 // Sample data for initialization
 const sampleData: Omit<PortfolioItem, 'id' | 'createdAt'>[] = [
-  {
-    title: 'E-commerce Mobile App',
-    description: 'A full-featured mobile shopping app built with React Native and Node.js backend. Features include user authentication, product catalog, shopping cart, and payment integration.',
-    image: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=800',
-    technologies: ['React Native', 'Node.js', 'MongoDB', 'Stripe'],
-    type: 'mobile',
-    githubUrl: 'https://github.com',
-    liveUrl: 'https://app-store-link.com',
-  },
-  {
-    title: 'Task Management Dashboard',
-    description: 'A modern web application for project management with real-time collaboration, drag-and-drop interface, and team chat functionality.',
-    image: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=800',
-    technologies: ['Next.js', 'TypeScript', 'PostgreSQL', 'Socket.io'],
-    type: 'web',
-    githubUrl: 'https://github.com',
-    liveUrl: 'https://taskmanager-demo.com',
-  },
+ 
 ];
 
 export async function getPortfolioItems(): Promise<PortfolioItem[]> {
