@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Github, Linkedin, Mail, Download } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
+import { getOptimizedImageUrl } from '@/lib/image-utils';
 
 const Hero = () => {
   const [imageError, setImageError] = useState(false);
@@ -64,7 +65,7 @@ const Hero = () => {
             <div className="w-32 h-32 mx-auto mb-6 rounded-full overflow-hidden border-4 border-primary/20 shadow-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
               {!imageError ? (
                 <Image
-                  src="/images/profile.jpg"
+                  src={getOptimizedImageUrl("/images/profile.jpg")}
                   alt="Profile Photo"
                   width={128}
                   height={128}
