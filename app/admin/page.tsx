@@ -25,6 +25,10 @@ import ImageUrlInput from '@/components/ImageUrlInput';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getOptimizedImageUrl } from '@/lib/image-utils';
+import { database } from '@/lib/firebase';
+import { ref, onValue } from 'firebase/database';
+import { VisitLog } from '@/lib/analytics';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const AdminPage = () => {
   const [projects, setProjects] = useState<PortfolioItem[]>([]);
@@ -51,11 +55,38 @@ const AdminPage = () => {
     description: '',
   });
 
+  const [analyticsData, setAnalyticsData] = useState<{ totalVisitors: number, visitLogs: VisitLog[] }>({ totalVisitors: 0, visitLogs: [] });
+
   useEffect(() => {
     loadProjects();
     loadProfile();
     loadExperiences();
+    loadAnalytics();
   }, []);
+
+  const loadAnalytics = () => {
+    const analyticsRef = ref(database, 'analytics');
+    onValue(analyticsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const logs: VisitLog[] = [];
+        if (data.visit_logs) {
+          Object.keys(data.visit_logs).forEach((key) => {
+            logs.push({
+              id: key,
+              ...data.visit_logs[key],
+            });
+          });
+          // Sort by timestamp descending
+          logs.sort((a, b) => b.timestamp - a.timestamp);
+        }
+        setAnalyticsData({
+          totalVisitors: data.total_visitors || 0,
+          visitLogs: logs,
+        });
+      }
+    });
+  };
 
   const loadExperiences = async () => {
     try {
@@ -243,10 +274,11 @@ const AdminPage = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="projects" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8 max-w-[600px]">
+          <TabsList className="grid w-full grid-cols-4 mb-8 max-w-[800px]">
             <TabsTrigger value="projects">Projects</TabsTrigger>
             <TabsTrigger value="experience">Work History</TabsTrigger>
             <TabsTrigger value="profile">Profile Settings</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
           <TabsContent value="projects">
@@ -613,6 +645,82 @@ const AdminPage = () => {
                 </form>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <div className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Total Visitors
+                    </CardTitle>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      className="h-4 w-4 text-muted-foreground"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{analyticsData.totalVisitors}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Total unique sessions recorded
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Visitor Logs</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Time</TableHead>
+                          <TableHead>IP Address</TableHead>
+                          <TableHead>Location</TableHead>
+                          <TableHead>Page</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {analyticsData.visitLogs.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={4} className="h-24 text-center">
+                              No visits recorded yet.
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          analyticsData.visitLogs.map((log) => (
+                            <TableRow key={log.id}>
+                              <TableCell>
+                                {new Date(log.timestamp).toLocaleString()}
+                              </TableCell>
+                              <TableCell>{log.ip}</TableCell>
+                              <TableCell>
+                                {log.location.city}, {log.location.country}
+                              </TableCell>
+                              <TableCell>{log.path}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
