@@ -603,7 +603,7 @@ const AdminPage = () => {
                         rows={6}
                       />
                       <p className="text-sm text-muted-foreground">
-                        This text will appear in the "About Me" section above your work history.
+                        This text will appear in the &quot;About Me&quot; section above your work history.
                       </p>
                     </div>
                   </div>
