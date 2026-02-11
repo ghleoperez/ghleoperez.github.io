@@ -8,6 +8,7 @@ import { Github, ExternalLink, Smartphone, Monitor } from 'lucide-react';
 import Image from 'next/image';
 import { getPortfolioItems, PortfolioItem, migrateFromLocalStorage } from '@/lib/portfolio';
 import { toast } from 'sonner';
+import { getOptimizedImageUrl } from '@/lib/image-utils';
 
 // Add the getIcon function
 const getIcon = (type: 'web' | 'mobile') => {
@@ -100,7 +101,7 @@ const Portfolio = () => {
                 <div className="aspect-video relative overflow-hidden bg-muted">
                   {project.image ? (
                     <img
-                      src={project.image}
+                      src={getOptimizedImageUrl(project.image)}
                       alt={project.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />

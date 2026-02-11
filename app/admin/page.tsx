@@ -12,12 +12,23 @@ import { Label } from '@/components/ui/label';
 import { Plus, Edit, Trash2, Github, ExternalLink, Home, X } from 'lucide-react';
 import Link from 'next/link';
 import { getPortfolioItems, savePortfolioItem, updatePortfolioItem, deletePortfolioItem, PortfolioItem } from '@/lib/portfolio';
+import { getProfileData, saveProfileData, ProfileData } from '@/lib/profile';
+import {
+  getWorkExperiences,
+  saveWorkExperience,
+  updateWorkExperience,
+  deleteWorkExperience,
+  WorkExperience
+} from '@/lib/experience';
 import { toast } from 'sonner';
-import ImageUpload from '@/components/ImageUpload';
+import ImageUrlInput from '@/components/ImageUrlInput';
 import Image from 'next/image';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getOptimizedImageUrl } from '@/lib/image-utils';
 
 const AdminPage = () => {
   const [projects, setProjects] = useState<PortfolioItem[]>([]);
+  const [profileData, setProfileData] = useState<ProfileData>({ userLogo: '', bio: '' });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<PortfolioItem | null>(null);
   const [formData, setFormData] = useState({
@@ -30,9 +41,107 @@ const AdminPage = () => {
     liveUrl: '',
   });
 
+  const [experiences, setExperiences] = useState<WorkExperience[]>([]);
+  const [isExperienceDialogOpen, setIsExperienceDialogOpen] = useState(false);
+  const [editingExperience, setEditingExperience] = useState<WorkExperience | null>(null);
+  const [experienceFormData, setExperienceFormData] = useState({
+    company: '',
+    role: '',
+    period: '',
+    description: '',
+  });
+
   useEffect(() => {
     loadProjects();
+    loadProfile();
+    loadExperiences();
   }, []);
+
+  const loadExperiences = async () => {
+    try {
+      const items = await getWorkExperiences();
+      setExperiences(items);
+    } catch (error) {
+      console.error('Error loading experiences:', error);
+      toast.error('Failed to load work history');
+    }
+  };
+
+  const handleExperienceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingExperience) {
+        await updateWorkExperience(editingExperience.id, experienceFormData);
+        toast.success('Experience updated successfully!');
+      } else {
+        await saveWorkExperience(experienceFormData);
+        toast.success('Experience added successfully!');
+      }
+      await loadExperiences();
+      setIsExperienceDialogOpen(false);
+      resetExperienceForm();
+    } catch (error) {
+      console.error('Error saving experience:', error);
+      toast.error('Failed to save experience');
+    }
+  };
+
+  const handleEditExperience = (experience: WorkExperience) => {
+    setEditingExperience(experience);
+    setExperienceFormData({
+      company: experience.company,
+      role: experience.role,
+      period: experience.period,
+      description: experience.description,
+    });
+    setIsExperienceDialogOpen(true);
+  };
+
+  const handleDeleteExperience = async (id: string) => {
+    if (confirm('Are you sure you want to delete this experience?')) {
+      try {
+        await deleteWorkExperience(id);
+        toast.success('Experience deleted successfully');
+        await loadExperiences();
+      } catch (error) {
+        console.error('Error deleting experience:', error);
+        toast.error('Failed to delete experience');
+      }
+    }
+  };
+
+  const resetExperienceForm = () => {
+    setEditingExperience(null);
+    setExperienceFormData({
+      company: '',
+      role: '',
+      period: '',
+      description: '',
+    });
+  };
+
+  const loadProfile = async () => {
+    try {
+      const data = await getProfileData();
+      if (data) {
+        setProfileData(data);
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      toast.error('Failed to load profile settings');
+    }
+  };
+
+  const handleProfileSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await saveProfileData(profileData);
+      toast.success('Profile settings updated successfully!');
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast.error('Failed to update profile settings');
+    }
+  };
 
   // Update the loadProjects function
   const loadProjects = async () => {
@@ -133,7 +242,15 @@ const AdminPage = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
+        <Tabs defaultValue="projects" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-8 max-w-[600px]">
+            <TabsTrigger value="projects">Projects</TabsTrigger>
+            <TabsTrigger value="experience">Work History</TabsTrigger>
+            <TabsTrigger value="profile">Profile Settings</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="projects">
+            <div className="flex justify-between items-center mb-8">
           <div>
             <h2 className="text-3xl font-bold mb-2">Manage Projects</h2>
             <p className="text-muted-foreground">Add, edit, or remove projects from your portfolio</p>
@@ -189,11 +306,11 @@ const AdminPage = () => {
                   />
                 </div>
 
-                {/* Replace the image URL input with ImageUpload component */}
-                <ImageUpload
-                  currentImage={formData.image}
-                  onImageUploaded={(url) => setFormData({ ...formData, image: url })}
-                  folder="portfolio"
+                {/* Replace the image URL input with ImageUrlInput component */}
+                <ImageUrlInput
+                  value={formData.image || ''}
+                  onChange={(url) => setFormData({ ...formData, image: url })}
+                  label="Project Image URL"
                 />
 
                 <div>
@@ -262,7 +379,7 @@ const AdminPage = () => {
               <Card key={project.id} className="group">
                 <div className="aspect-video relative overflow-hidden bg-muted rounded-t-lg">
                   {project.image ? (
-                    <Image src={project.image} alt={project.title} className="w-full h-full object-cover" />
+                    <Image src={getOptimizedImageUrl(project.image)} alt={project.title} className="w-full h-full object-cover" width={500} height={300} unoptimized />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                       No Image
@@ -336,6 +453,168 @@ const AdminPage = () => {
             ))}
           </div>
         )}
+          </TabsContent>
+
+          <TabsContent value="experience">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-3xl font-bold mb-2">Work History</h2>
+                <p className="text-muted-foreground">Manage your work experience timeline</p>
+              </div>
+
+              <Dialog open={isExperienceDialogOpen} onOpenChange={setIsExperienceDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={resetExperienceForm}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Experience
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingExperience ? 'Edit Experience' : 'Add New Experience'}
+                    </DialogTitle>
+                  </DialogHeader>
+
+                  <form onSubmit={handleExperienceSubmit} className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="company">Company *</Label>
+                        <Input
+                          id="company"
+                          value={experienceFormData.company}
+                          onChange={(e) => setExperienceFormData({ ...experienceFormData, company: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="role">Role *</Label>
+                        <Input
+                          id="role"
+                          value={experienceFormData.role}
+                          onChange={(e) => setExperienceFormData({ ...experienceFormData, role: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="period">Period *</Label>
+                      <Input
+                        id="period"
+                        value={experienceFormData.period}
+                        onChange={(e) => setExperienceFormData({ ...experienceFormData, period: e.target.value })}
+                        placeholder="e.g. Jan 2020 - Present"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="description">Summary *</Label>
+                      <Textarea
+                        id="description"
+                        value={experienceFormData.description}
+                        onChange={(e) => setExperienceFormData({ ...experienceFormData, description: e.target.value })}
+                        rows={4}
+                        required
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => setIsExperienceDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit">
+                        {editingExperience ? 'Update Experience' : 'Add Experience'}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {experiences.length === 0 ? (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <h3 className="text-xl font-semibold mb-2">No work history yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Add your professional experience to show your journey
+                  </p>
+                  <Button onClick={() => setIsExperienceDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Experience
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {experiences.map((experience) => (
+                  <Card key={experience.id}>
+                    <CardContent className="p-6 flex justify-between items-start">
+                      <div>
+                        <h3 className="text-xl font-semibold mb-1">{experience.role}</h3>
+                        <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                          <span className="font-medium">{experience.company}</span>
+                          <span>•</span>
+                          <span>{experience.period}</span>
+                        </div>
+                        <p className="text-muted-foreground">{experience.description}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="icon" variant="outline" onClick={() => handleEditExperience(experience)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="destructive" onClick={() => handleDeleteExperience(experience.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="profile">
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Settings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleProfileSave} className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <ImageUrlInput
+                        value={profileData.userLogo || ''}
+                        onChange={(url) => setProfileData(prev => ({ ...prev, userLogo: url }))}
+                        label="User Logo URL"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        This image will appear in the header/navigation bar.
+                      </p>
+                    </div>
+                    <div className="space-y-4">
+                      <Label htmlFor="bio">Bio / About Me</Label>
+                      <Textarea
+                        id="bio"
+                        value={profileData.bio || ''}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
+                        placeholder="Write a short bio about yourself..."
+                        rows={6}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        This text will appear in the "About Me" section above your work history.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button type="submit">Save Settings</Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

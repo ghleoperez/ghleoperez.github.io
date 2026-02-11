@@ -1,12 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Code2 } from 'lucide-react';
 import Link from 'next/link';
+import { getProfileData } from '@/lib/profile';
+import { getOptimizedImageUrl } from '@/lib/image-utils';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadLogo = async () => {
+      const data = await getProfileData();
+      if (data?.userLogo) {
+        setLogoUrl(data.userLogo);
+      }
+    };
+    loadLogo();
+  }, []);
 
   const navItems = [
     { href: '#home', label: 'Home' },
@@ -21,7 +34,11 @@ const Header = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-            <Code2 className="h-6 w-6 text-primary" />
+            {logoUrl ? (
+              <img src={getOptimizedImageUrl(logoUrl)} alt="Logo" className="h-8 w-8 rounded-full object-cover" />
+            ) : (
+              <Code2 className="h-6 w-6 text-primary" />
+            )}
             DevPortfolio
           </Link>
 

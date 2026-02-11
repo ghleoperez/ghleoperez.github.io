@@ -31,6 +31,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const [preview, setPreview] = useState<string | null>(currentImage || null);
   const [selectedTab, setSelectedTab] = useState('upload');
 
+  useEffect(() => {
+    setPreview(currentImage || null);
+  }, [currentImage]);
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
